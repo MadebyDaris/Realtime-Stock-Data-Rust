@@ -21,25 +21,26 @@ pub struct Client {
 impl Client{
     // Initiate a new Client
     fn new() -> Client {
-        Client { }
+        Client { 
+            widgets: vec![] 
+        }
     }
 }
-
 impl Default for Client {
     fn default() -> Self {
         Self::new()
     }
 }
+
 impl<'a> CliClient for Client {
 
     fn start_ui<B:Backend>(f: &mut Frame<B>, app: Client) -> Result<(), Box<dyn std::error::Error>>{
+
         let stdout = std::io::stdout();
         crossterm::terminal::enable_raw_mode()?;
         let backend = CrosstermBackend::new(stdout);
         let mut terminal = Terminal::new(backend)?;
         terminal.clear()?;
-        terminal.hide_cursor()?;
-    
         
         loop {
             let app = app.borrow();
