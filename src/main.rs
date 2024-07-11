@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use reqwest::Client;
 use std::fs::read_to_string;
 
+mod interface;
+
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct StockRaw {
