@@ -1,91 +1,39 @@
-use std::borrow::Borrow;
+use std::{borrow::Borrow, io};
 
-use crossterm::{event::{self, Event, KeyCode}, terminal};
-use tui::{backend::{self, Backend, CrosstermBackend}, layout::{Constraint, Direction, Layout}, Frame, Terminal};
+use crossterm::{event::{self, EnableMouseCapture, Event, KeyCode}, execute, terminal::{self, enable_raw_mode, EnterAlternateScreen}};
+use tui::{backend::{self, Backend, CrosstermBackend}, layout::{Constraint, Direction, Layout, Rect}, widgets::Widget, Frame, Terminal};
+use ui::InputEditorWidget;
 
 pub mod ui;
-
-// Editing mode or viewing mode
-// Trait given to all editing Cli interfaces
-pub trait CliClient {
-    fn run_app<B:Backend>(&mut self, terminal: &mut Terminal<B>);
-    fn start_ui<B:Backend>(f: &mut Frame<B>, app: Client) -> Result<(), Box<dyn std::error::Error>>;
-}   
-
+pub mod parsing;
 
 // Our client in question
-pub struct Client {
-    widgets: Vec<Box<dyn ui::CliWidget>>,
+pub struct app<'a> {
+    term:  Terminal<CrosstermBackend<io::Stdout>> ,
+    chunk: Vec<Rect>,
+    editor: InputEditorWidget<'a>,
 }
 
-impl Client{
+impl app<'_> {
     // Initiate a new Client
-    fn new() -> Client {
-        Client { 
-            widgets: vec![] 
-        }
-    }
-}
-impl Default for Client {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<'a> CliClient for Client {
-
-    fn start_ui<B:Backend>(f: &mut Frame<B>, app: Client) -> Result<(), Box<dyn std::error::Error>>{
-
-        let stdout = std::io::stdout();
-        crossterm::terminal::enable_raw_mode()?;
+    pub fn new(editor: InputEditorWidget, chunk: Vec<Rect>) -> Result<app, io::Error> {
+        enable_raw_mode()?;
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         let backend = CrosstermBackend::new(stdout);
-        let mut terminal = Terminal::new(backend)?;
-        terminal.clear()?;
+        let mut term: Terminal<CrosstermBackend<io::Stdout>> = Terminal::new(backend)?;
         
-        loop {
-            let app = app.borrow();
-            // Render
-            terminal.draw(|rect| ui(rect, &app))?;
-            // TODO handle inputs here
-        }
-    
-        // Restore the terminal and close application
-        terminal.clear()?;
-        terminal.show_cursor()?;
-        crossterm::terminal::disable_raw_mode()?;
+        Ok(app {term, chunk, editor})
     }
-
-    // Running the new client
-    fn run_app<B: Backend>(&mut self, terminal: &mut Terminal<B>) {
-        loop{
-            terminal.draw(|f| self.unwrap());
-
-        if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('q') => return Ok(()),
-                _ => {}
-                }
-            }
-        }
-    }
+    pub fn draw(mut self, ui: impl Fn(&mut Frame<'_, CrosstermBackend<std::io::Stdout>>, &app)) {
+        self.term.draw(|f| ui(f, &self));
+    } 
 }
 
-pub trait IOApp {
-    fn info_editor() {}
-    fn start_editor<B:Backend>(terminal: &mut Terminal<B>, app: &impl CliClient) {}
-    fn exit_editor() {}
-    
-}
-
-impl IOApp for Client {
-    fn info_editor() {
-        
-    }
-    fn start_editor<B:Backend>(terminal: &mut Terminal<B>, app: &impl CliClient) {
-        
-    }
-    
-    fn exit_editor() {
-
+impl Drop for app<'_> {
+    fn drop(&mut self) {
+        // Disable raw mode and restore the original terminal state
+        terminal::disable_raw_mode().unwrap();
+        execute!(self.term.backend_mut(), terminal::LeaveAlternateScreen, crossterm::event::DisableMouseCapture).unwrap();
     }
 }

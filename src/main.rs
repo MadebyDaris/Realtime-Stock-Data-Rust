@@ -1,7 +1,9 @@
+use interface::{ui::{self, HelpMessage, TitleWidget}};
 #[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
-use std::fs::read_to_string;
+use tui::layout::{self, Constraint, Direction, Layout};
+use std::{fs::read_to_string};
 
 mod interface;
 
@@ -56,6 +58,20 @@ impl Stock {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
+
+    let vertical = Layout::default()
+    .direction(Direction::Vertical)
+    .constraints([Constraint::Length(5), Constraint::Min(0)].as_ref())
+    .split(layout::Rect {
+        x: 2,
+        y: 2,
+        width: 10,
+        height: 10,
+    });
+
+    let title = TitleWidget::new("ATS in rust".to_string()).draw()?;
+    let message = HelpMessage::new().draw()?;
+
     let token = read_to_string("token.txt")?;
     let aaple = Stock::new("AAPL".to_string(), token).await?;
     println!("{}",aaple.val.c);
