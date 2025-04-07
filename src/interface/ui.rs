@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use crossterm::event::{self, Event, KeyCode};
 use tui::{backend::Backend,
     layout::{Constraint, Direction, Layout, Rect}, 
@@ -8,11 +10,11 @@ use tui::{backend::Backend,
 
 
 
-/*
 pub trait CliWidget {
-    fn draw(&self) -> Result<Box<impl tui::widgets::Widget>, Box<dyn std::error::Error>>;
-}
-
+    fn draw(&self) -> Result<Box<dyn Widget>, Box<dyn Error>>;
+    }
+    
+/*
  Notice I used this trait to make the widget system expandable 
  But due to an issue in wrapping a tui::Widget object in a Box 
  was unable to fisplay or render the particular widget.
@@ -32,8 +34,8 @@ impl TitleWidget {
         TitleWidget {title: title}
     }
 }
-impl TitleWidget {
-    pub fn draw(&self) -> Result<Paragraph, Box<dyn std::error::Error>> {
+impl CliWidget for TitleWidget {
+    fn draw(&self) -> Result<Box<dyn Widget>, Box<dyn Error>> {
         let title = Paragraph::new("test").style(Style::default())
         .alignment(tui::layout::Alignment::Center)
         .block(Block::default()
@@ -41,7 +43,7 @@ impl TitleWidget {
             .style(Style::default().fg(style::Color::White))
             .border_type(BorderType::Plain),);
 
-        Ok(title)
+        Ok(Box::new(title))
     }
 }
 

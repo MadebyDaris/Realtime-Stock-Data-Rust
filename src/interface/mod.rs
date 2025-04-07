@@ -20,7 +20,7 @@ impl app<'_> {
         enable_raw_mode()?;
         let mut stdout = io::stdout();
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-        let backend = CrosstermBackend::new(stdout);
+        let backend = CrosstermBackend::n1ew(stdout);
         let mut term: Terminal<CrosstermBackend<io::Stdout>> = Terminal::new(backend)?;
         
         Ok(app {term, chunk, editor})

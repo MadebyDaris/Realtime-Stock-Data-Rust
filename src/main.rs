@@ -1,4 +1,4 @@
-use interface::{ui::{self, HelpMessage, TitleWidget}};
+use interface::ui::{self, CliWidget, HelpMessage, TitleWidget};
 #[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
@@ -69,7 +69,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         height: 10,
     });
 
-    let title = TitleWidget::new("ATS in rust".to_string()).draw()?;
+    let title = TitleWidget::new("ATS in Rust".to_string());
+    let title_widget = title.draw()?;
+
     let message = HelpMessage::new().draw()?;
 
     let token = read_to_string("token.txt")?;
